@@ -48,7 +48,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '.' # Scan the local Dockerfile
+          image-ref: 'localbuild/openstack-k8s-tools:pr-${{ github.event.number }}' # Scan the Dockerfile
           format: 'table'
           exit-code: '1' # Fail the build if vulnerabilities are found
           ignore-unfixed: true
@@ -69,7 +69,7 @@ jobs:
           # Use the secret you created
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          image: '.' # Scan the local Dockerfile
+          image: 'localbuild/openstack-k8s-tools:pr-${{ github.event.number }}' # Scan the Dockerfile
           args: --severity-threshold=high
 
   # JOB 4: Publish the image to GHCR
