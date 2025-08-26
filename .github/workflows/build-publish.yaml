@@ -45,6 +45,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Build the Docker image for testing
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          # We don't push here, just load it into the runner's docker instance
+          load: true
+          # We'll tag it with the PR number for easy reference
+          tags: localbuild/openstack-k8s-tools:pr-${{ github.event.number }}
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -63,6 +73,16 @@ jobs:
     needs: build-and-test
     steps:
       - uses: actions/checkout@v4
+
+      - name: Build the Docker image for testing
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          # We don't push here, just load it into the runner's docker instance
+          load: true
+          # We'll tag it with the PR number for easy reference
+          tags: localbuild/openstack-k8s-tools:pr-${{ github.event.number }}
 
       - name: Run Snyk to check Docker image for vulnerabilities
         uses: snyk/actions/docker@master
