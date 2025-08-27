@@ -30,9 +30,14 @@ jobs:
           tags: localbuild/openstack-k8s-tools:pr-${{ github.event.number }}
 
       - name: Test the image
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         run: |
           echo "Testing that the openstack client is installed..."
-          docker run --rm localbuild/openstack-k8s-tools:pr-${{ github.event.number }} openstack --version
+          docker run --rm \
+            -e OP_SERVICE_ACCOUNT_TOKEN \
+            localbuild/openstack-k8s-tools:pr-${{ github.event.number }} \
+            openstack token issue
           echo "Test passed!"
 
   # JOB 2: Run Trivy vulnerability scan
