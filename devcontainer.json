@@ -1,0 +1,7 @@
+{
+  "name": "OpenStack K8s Tools",
+  "image": "my/openstack-k8s-tools:latest",
+  "remoteEnv": {
+    "OP_SERVICE_ACCOUNT_TOKEN": "${localEnvFile:.env:OP_SERVICE_ACCOUNT_TOKEN}"
+  }
+}
