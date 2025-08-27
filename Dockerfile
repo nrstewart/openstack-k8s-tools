@@ -1,6 +1,6 @@
 # Use an official, lightweight Python base image.
 # Docker on your M1 will automatically pull the correct ARM64 version.
-FROM python:3.11-slim-bookworm
+FROM python:3.9.23-slim-trixie
 
 # Set the working directory inside the container.
 WORKDIR /app
@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     apt-transport-https \
     gnupg \
+    python3-pip \
+    python3-dev\
     && rm -rf /var/lib/apt/lists/*
 
 # Install kubectl
@@ -24,9 +26,9 @@ RUN apt-get update && apt-get install -y curl ca-certificates gnupg \
     && apt-get install -y kubectl \
     && rm -rf /var/lib/apt/lists/*
 
-
 # Install OpenStack clients
-RUN pip install --no-cache-dir \
+RUN pip3 install --no-cache-dir --upgrade \
+    setuptools \
     python-openstackclient \
     python-heatclient \
     python-magnumclient \
