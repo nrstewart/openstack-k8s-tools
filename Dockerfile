@@ -26,6 +26,14 @@ RUN apt-get update && apt-get install -y curl ca-certificates gnupg \
     && apt-get install -y kubectl \
     && rm -rf /var/lib/apt/lists/*
 
+# Install 1Password CLI
+RUN apt-get update && apt-get install -y curl gnupg ca-certificates \
+  && curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --dearmor -o /usr/share/keyrings/1password-archive-keyring.gpg \
+  && echo "deb [signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main" \
+    > /etc/apt/sources.list.d/1password.list \
+  && apt-get update && apt-get install -y 1password-cli \
+  && rm -rf /var/lib/apt/lists/*
+
 # Install OpenStack clients
 RUN pip3 install --no-cache-dir --upgrade \
     setuptools \
