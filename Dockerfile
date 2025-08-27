@@ -47,5 +47,11 @@ RUN pip3 install --no-cache-dir --upgrade \
     python-swiftclient \
     python-designateclient
 
+    # Copy the entrypoint into the container
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Use entrypoint
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 # This is the default command that runs when the container starts.
 CMD ["/bin/bash"]
