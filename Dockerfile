@@ -1,6 +1,6 @@
 # Use an official, lightweight Python base image.
 # Docker on your M1 will automatically pull the correct ARM64 version.
-FROM python:3.11-slim-bookworm
+FROM python:3.14.0rc2-slim-trixie
 
 # Set the working directory inside the container.
 WORKDIR /app
