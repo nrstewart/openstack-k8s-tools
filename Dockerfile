@@ -26,10 +26,6 @@ RUN apt-get update && apt-get install -y curl ca-certificates gnupg \
     && apt-get install -y kubectl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install or upgrade setuptools
-RUN pip install --no-cache-dir --upgrade setuptools
-
-
 # Install OpenStack clients
 RUN pip3 install --no-cache-dir --upgrade \
     setuptools \
