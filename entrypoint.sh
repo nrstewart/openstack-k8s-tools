@@ -14,10 +14,10 @@ fi
 # OpenStack Credentials
 # =============================
 echo "[entrypoint] Fetching OpenStack credentials..."
-export OS_USERNAME=$(op item get "OpenStack Creds" --field username --reveal)
-export OS_PASSWORD=$(op item get "OpenStack Creds" --field password --reveal)
-export OS_AUTH_URL=$(op item get "OpenStack Creds" --field auth_url --reveal)
-export OS_PROJECT_NAME=$(op item get "OpenStack Creds" --field project --reveal)
+export OS_USERNAME=$(op item get "Rapid Access Cloud" --vault Secrets --field username --reveal)
+export OS_PASSWORD=$(op item get "Rapid Access Cloud" --vault Secrets --field password --reveal)
+export OS_AUTH_URL=$(op item get "Rapid Access Cloud" --vault Secrets --field auth_url --reveal)
+export OS_PROJECT_NAME=$(op item get "Rapid Access Cloud" --vault Secrets --field username --reveal)
 
 # Optionally write clouds.yaml for tools that prefer it
 mkdir -p ~/.config/openstack
