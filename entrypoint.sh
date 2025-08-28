@@ -16,7 +16,7 @@ fi
 echo "[entrypoint] Fetching OpenStack credentials..."
 export OS_USERNAME=$(op item get "RAC" --vault Secrets --field username --reveal)
 export OS_PROJECT_NAME=$(op item get "RAC" --vault Secrets --field username --reveal)
-export OS_PASSWORD=$(op item get "RAC" --vault Secrets --field password --reveal)
+export OS_PASSWORD=$(op item get "RAC" --vault Secrets --field credential --reveal)
 export OS_PROJECT_ID=$(op item get "RAC" --vault Secrets --field project_id --reveal)
 export OS_AUTH_URL=$(op item get "RAC" --vault Secrets --field auth_url --reveal)
 export OS_USER_DOMAIN_NAME="Default"
