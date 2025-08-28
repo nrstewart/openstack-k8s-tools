@@ -17,6 +17,7 @@ echo "[entrypoint] Fetching OpenStack credentials..."
 export OS_USERNAME=$(op item get "Rapid Access Cloud" --vault Secrets --field username --reveal)
 export OS_PASSWORD=$(op item get "Rapid Access Cloud" --vault Secrets --field password --reveal)
 export OS_AUTH_URL="https://keystone-yyc.cloud.cybera.ca:5000/v3"
+export OS_USER_DOMAIN_NAME="Default"
 export OS_PROJECT_NAME=$(op item get "Rapid Access Cloud" --vault Secrets --field username --reveal)
 
 # Optionally write clouds.yaml for tools that prefer it
@@ -29,6 +30,7 @@ clouds:
       username: "$OS_USERNAME"
       password: "$OS_PASSWORD"
       project_name: "$OS_PROJECT_NAME"
+      domain_name: "$OS_USER_DOMAIN_NAME"
 EOF
 
 echo "[entrypoint] OpenStack credentials initialized."
