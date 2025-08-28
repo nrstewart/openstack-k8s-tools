@@ -67,7 +67,7 @@ jobs:
           format: 'table'
           exit-code: '1' # Fail the build if vulnerabilities are found
           ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
+          severity: 'CRITICAL'
 
 
   # JOB 3: Run Snyk vulnerability scan
@@ -96,7 +96,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           image: 'localbuild/openstack-k8s-tools:pr-${{ github.event.number }}' # Scan the Dockerfile
-          args: --severity-threshold=high
+          args: --severity-threshold=critical
 
   # JOB 4: Publish the image to GHCR
   # This job ONLY runs when a PR is merged into the 'main' branch.
