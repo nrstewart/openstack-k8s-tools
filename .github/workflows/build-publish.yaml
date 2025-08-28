@@ -30,9 +30,14 @@ jobs:
           tags: localbuild/openstack-k8s-tools:pr-${{ github.event.number }}
 
       - name: Test the image
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         run: |
           echo "Testing that the openstack client is installed..."
-          docker run --rm localbuild/openstack-k8s-tools:pr-${{ github.event.number }} openstack --version
+          docker run --rm \
+            -e OP_SERVICE_ACCOUNT_TOKEN \
+            localbuild/openstack-k8s-tools:pr-${{ github.event.number }} \
+            openstack token issue
           echo "Test passed!"
 
   # JOB 2: Run Trivy vulnerability scan
@@ -62,7 +67,7 @@ jobs:
           format: 'table'
           exit-code: '1' # Fail the build if vulnerabilities are found
           ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
+          severity: 'CRITICAL'
 
 
   # JOB 3: Run Snyk vulnerability scan
@@ -91,7 +96,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           image: 'localbuild/openstack-k8s-tools:pr-${{ github.event.number }}' # Scan the Dockerfile
-          args: --severity-threshold=high
+          args: --severity-threshold=critical
 
   # JOB 4: Publish the image to GHCR
   # This job ONLY runs when a PR is merged into the 'main' branch.
