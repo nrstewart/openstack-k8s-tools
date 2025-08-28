@@ -34,6 +34,14 @@ RUN apt-get update && apt-get install -y curl gnupg ca-certificates \
   && apt-get update && apt-get install -y 1password-cli \
   && rm -rf /var/lib/apt/lists/*
 
+# Install Terraform
+RUN apt-get update && apt-get install -y gnupg software-properties-common curl \
+    && curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
+    | tee /etc/apt/sources.list.d/hashicorp.list \
+    && apt-get update && apt-get install -y terraform \
+    && rm -rf /var/lib/apt/lists/*  
+
 # Install OpenStack clients
 RUN pip3 install --no-cache-dir --upgrade \
     setuptools \
@@ -47,7 +55,7 @@ RUN pip3 install --no-cache-dir --upgrade \
     python-swiftclient \
     python-designateclient
 
-    # Copy the entrypoint into the container
+# Copy the entrypoint into the container
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
