@@ -1,6 +1,9 @@
 {
   "name": "Infra Tooling",
-  "image": "ghcr.io/<myorg>/myapp:main",
+  "build": {
+    "context": "..",
+    "dockerfile": "../Dockerfile"
+  },
 
   "workspaceFolder": "/workspaces/app",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/app,type=bind",
