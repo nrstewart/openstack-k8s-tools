@@ -17,54 +17,54 @@ env:
 jobs:
   # JOB 1: Build the image and run a basic test
   # This job runs on every PR to ensure the image builds successfully.
-build-and-test:
-  name: Build & Test (Devcontainer w/ Features)
-  runs-on: ubuntu-latest
-  env:
-    IMAGE_NAME_VAR: ${{ vars.IMAGE_NAME }}
-    OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+  build-and-test:
+    name: Build & Test (Devcontainer w/ Features)
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME_VAR: ${{ vars.IMAGE_NAME }}
+      OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
 
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Determine image name
-      id: vars
-      run: |
-        DEFAULT_NAME="$(echo "${GITHUB_REPOSITORY#*/}" | tr '[:upper:]/_' '[:lower:]-')"
-        IMAGE_NAME="${IMAGE_NAME_VAR:-$DEFAULT_NAME}"
-        echo "image=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+      - name: Determine image name
+        id: vars
+        run: |
+          DEFAULT_NAME="$(echo "${GITHUB_REPOSITORY#*/}" | tr '[:upper:]/_' '[:lower:]-')"
+          IMAGE_NAME="${IMAGE_NAME_VAR:-$DEFAULT_NAME}"
+          echo "image=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
 
-    # initializeCommand needs the 1Password CLI on the HOST (runner)
-    - name: Install 1Password CLI on runner
-      run: |
-        set -eux
-        sudo mkdir -p /usr/share/keyrings
-        curl -sS https://downloads.1password.com/linux/keys/1password.asc \
-          | gpg --dearmor | sudo tee /usr/share/keyrings/1password-archive-keyring.gpg >/dev/null
-        echo "deb [signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] \
-          https://downloads.1password.com/linux/debian/$(dpkg --print-architecture) stable main" \
-          | sudo tee /etc/apt/sources.list.d/1password.list
-        sudo apt-get update
-        sudo apt-get install -y 1password-cli
-
-    # Build the devcontainer (Features applied) and run tests INSIDE it
-    - name: Build & run devcontainer
-      uses: devcontainers/ci@v0.3
-      with:
-        imageName: localbuild/${{ steps.vars.outputs.image }}:pr-${{ github.event.number }}
-        runCmd: |
+      # initializeCommand needs the 1Password CLI on the HOST (runner)
+      - name: Install 1Password CLI on runner
+        run: |
           set -eux
-          # sanity: tools from Dockerfile
-          kubectl version --client
-          terraform -version
-          # python via Feature + pip tooling via postCreate
-          python --version
-          ansible --version
-          ansible-lint --version
-          # OpenStack auth (env comes from initializeCommand -> env file)
-          openstack token issue >/dev/null
-          echo "Devcontainer smoke tests OK"
+          sudo mkdir -p /usr/share/keyrings
+          curl -sS https://downloads.1password.com/linux/keys/1password.asc \
+            | gpg --dearmor | sudo tee /usr/share/keyrings/1password-archive-keyring.gpg >/dev/null
+          echo "deb [signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] \
+            https://downloads.1password.com/linux/debian/$(dpkg --print-architecture) stable main" \
+            | sudo tee /etc/apt/sources.list.d/1password.list
+          sudo apt-get update
+          sudo apt-get install -y 1password-cli
+
+      # Build the devcontainer (Features applied) and run tests INSIDE it
+      - name: Build & run devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          imageName: localbuild/${{ steps.vars.outputs.image }}:pr-${{ github.event.number }}
+          runCmd: |
+            set -eux
+            # sanity: tools from Dockerfile
+            kubectl version --client
+            terraform -version
+            # python via Feature + pip tooling via postCreate
+            python --version
+            ansible --version
+            ansible-lint --version
+            # OpenStack auth (env comes from initializeCommand -> env file)
+            openstack token issue >/dev/null
+            echo "Devcontainer smoke tests OK"
 
   # JOB 2: Run Trivy vulnerability scan
   # This job depends on the build succeeding and runs on every PR.
