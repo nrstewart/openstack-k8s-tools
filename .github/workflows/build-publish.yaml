@@ -17,64 +17,54 @@ env:
 jobs:
   # JOB 1: Build the image and run a basic test
   # This job runs on every PR to ensure the image builds successfully.
-  build-and-test:
-    name: Build & Test (PR)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+build-and-test:
+  name: Build & Test (Devcontainer w/ Features)
+  runs-on: ubuntu-latest
+  env:
+    IMAGE_NAME_VAR: ${{ vars.IMAGE_NAME }}
+    OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
 
-      - name: Determine image name
-        id: vars
-        run: |
-          DEFAULT_NAME="$(echo "${GITHUB_REPOSITORY#*/}" | tr '[:upper:]/_' '[:lower:]-')"
-          IMAGE_NAME="${IMAGE_NAME_VAR:-$DEFAULT_NAME}"
-          echo "image=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
+    - name: Determine image name
+      id: vars
+      run: |
+        DEFAULT_NAME="$(echo "${GITHUB_REPOSITORY#*/}" | tr '[:upper:]/_' '[:lower:]-')"
+        IMAGE_NAME="${IMAGE_NAME_VAR:-$DEFAULT_NAME}"
+        echo "image=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
 
-      - name: Build image (amd64, local load for tests)
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          # We don't push here, just load it into the runner's docker instance
-          load: true
-          platforms: linux/amd64
-          # We'll tag it with the PR number for easy reference
-          tags: localbuild/${{ steps.vars.outputs.image }}:pr-${{ github.event.number }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+    # initializeCommand needs the 1Password CLI on the HOST (runner)
+    - name: Install 1Password CLI on runner
+      run: |
+        set -eux
+        sudo mkdir -p /usr/share/keyrings
+        curl -sS https://downloads.1password.com/linux/keys/1password.asc \
+          | gpg --dearmor | sudo tee /usr/share/keyrings/1password-archive-keyring.gpg >/dev/null
+        echo "deb [signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] \
+          https://downloads.1password.com/linux/debian/$(dpkg --print-architecture) stable main" \
+          | sudo tee /etc/apt/sources.list.d/1password.list
+        sudo apt-get update
+        sudo apt-get install -y 1password-cli
 
-      # Install 1Password CLI on the runner to resolve OpenStack env for the test
-      - name: Install 1Password CLI (runner)
-        run: |
+    # Build the devcontainer (Features applied) and run tests INSIDE it
+    - name: Build & run devcontainer
+      uses: devcontainers/ci@v0.3
+      with:
+        imageName: localbuild/${{ steps.vars.outputs.image }}:pr-${{ github.event.number }}
+        runCmd: |
           set -eux
-          sudo mkdir -p /usr/share/keyrings
-          curl -sS https://downloads.1password.com/linux/keys/1password.asc \
-            | gpg --dearmor | sudo tee /usr/share/keyrings/1password-archive-keyring.gpg >/dev/null
-          echo "deb [signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/$(dpkg --print-architecture) stable main" \
-            | sudo tee /etc/apt/sources.list.d/1password.list
-          sudo apt-get update
-          sudo apt-get install -y 1password-cli    
-      - name: Resolve OpenStack env with 1Password
-        env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-        run: |
-          mkdir -p .devcontainer/.secrets/openstack
-          op run --env-file .devcontainer/.env.template -- sh -lc 'env | sort' > .devcontainer/.secrets/openstack/env.resolved
-          awk -F= '/^(OS_USERNAME|OS_PROJECT_NAME|OS_PASSWORD|OS_PROJECT_ID|OS_AUTH_URL|OS_USER_DOMAIN_NAME)=/ {print}' \
-            .devcontainer/.secrets/openstack/env.resolved > .devcontainer/.secrets/openstack/openstack.env
-
-      - name: Smoke test tools (and OpenStack auth)
-        env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-        run: |
-          set -eux
-          docker run --rm \
-            --env-file .devcontainer/.secrets/openstack/openstack.env \
-            localbuild/${{ steps.vars.outputs.image }}:pr-${{ github.event.number }} \
-            bash -lc 'kubectl version --client && terraform -version && ansible --version && ansible-lint --version && openstack token issue >/dev/null && echo OK'
+          # sanity: tools from Dockerfile
+          kubectl version --client
+          terraform -version
+          # python via Feature + pip tooling via postCreate
+          python --version
+          ansible --version
+          ansible-lint --version
+          # OpenStack auth (env comes from initializeCommand -> env file)
+          openstack token issue >/dev/null
+          echo "Devcontainer smoke tests OK"
 
   # JOB 2: Run Trivy vulnerability scan
   # This job depends on the build succeeding and runs on every PR.
