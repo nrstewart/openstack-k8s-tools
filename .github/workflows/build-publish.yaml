@@ -52,7 +52,8 @@ jobs:
       - name: Build & run devcontainer
         uses: devcontainers/ci@v0.3
         with:
-          imageName: localbuild/${{ steps.vars.outputs.image }}:pr-${{ github.event.number }}
+          imageName: localbuild/${{ steps.vars.outputs.image }}
+          imageTag: pr-${{ github.event.number }}
           runCmd: |
             set -eux
             # sanity: tools from Dockerfile
