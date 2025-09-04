@@ -9,63 +9,103 @@ on:
   push:
     branches: [ "main" ]
 
+env:
+  # Optional repo-level variable (Settings → Variables → Actions → Repository variables)
+  # If not set, we’ll fall back to the repository name (lowercased, slashes -> dashes)
+  IMAGE_NAME_VAR: ${{ vars.IMAGE_NAME }}
+
 jobs:
   # JOB 1: Build the image and run a basic test
   # This job runs on every PR to ensure the image builds successfully.
   build-and-test:
-    name: Build & Test
+    name: Build & Test (PR)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build the Docker image for testing
-        id: build
-        uses: docker/build-push-action@v5
+      - name: Determine image name
+        id: vars
+        run: |
+          DEFAULT_NAME="$(echo "${GITHUB_REPOSITORY#*/}" | tr '[:upper:]/_' '[:lower:]-')"
+          IMAGE_NAME="${IMAGE_NAME_VAR:-$DEFAULT_NAME}"
+          echo "image=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (amd64, local load for tests)
+        uses: docker/build-push-action@v6
         with:
           context: .
           # We don't push here, just load it into the runner's docker instance
           load: true
+          platforms: linux/amd64
           # We'll tag it with the PR number for easy reference
-          tags: localbuild/openstack-k8s-tools:pr-${{ github.event.number }}
+          tags: localbuild/${{ steps.vars.outputs.image }}:pr-${{ github.event.number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Test the image
+      # Install 1Password CLI on the runner to resolve OpenStack env for the test
+      - name: Install 1Password CLI (runner)
+        run: |
+          set -eux
+          sudo mkdir -p /usr/share/keyrings
+          curl -sS https://downloads.1password.com/linux/keys/1password.asc \
+            | gpg --dearmor | sudo tee /usr/share/keyrings/1password-archive-keyring.gpg >/dev/null
+          echo "deb [signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/$(dpkg --print-architecture) stable main" \
+            | sudo tee /etc/apt/sources.list.d/1password.list
+          sudo apt-get update
+          sudo apt-get install -y 1password-cli    
+      - name: Resolve OpenStack env with 1Password
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         run: |
-          echo "Testing that the openstack client is installed..."
+          mkdir -p .devcontainer/.secrets/openstack
+          op run --env-file .devcontainer/.env.template -- sh -lc 'env | sort' > .devcontainer/.secrets/openstack/env.resolved
+          awk -F= '/^(OS_USERNAME|OS_PROJECT_NAME|OS_PASSWORD|OS_PROJECT_ID|OS_AUTH_URL|OS_USER_DOMAIN_NAME)=/ {print}' \
+            .devcontainer/.secrets/openstack/env.resolved > .devcontainer/.secrets/openstack/openstack.env
+
+      - name: Smoke test tools (and OpenStack auth)
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+        run: |
+          set -eux
           docker run --rm \
-            -e OP_SERVICE_ACCOUNT_TOKEN \
-            localbuild/openstack-k8s-tools:pr-${{ github.event.number }} \
-            openstack token issue
-          echo "Test passed!"
+            --env-file .devcontainer/.secrets/openstack/openstack.env \
+            localbuild/${{ steps.vars.outputs.image }}:pr-${{ github.event.number }} \
+            bash -lc 'kubectl version --client && terraform -version && ansible --version && ansible-lint --version && openstack token issue >/dev/null && echo OK'
 
   # JOB 2: Run Trivy vulnerability scan
   # This job depends on the build succeeding and runs on every PR.
   trivy-scan:
-    name: Trivy Scan
+    name: Trivy Scan (PR)
     runs-on: ubuntu-latest
     needs: build-and-test
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Build the Docker image for testing
-        id: build
-        uses: docker/build-push-action@v5
+      - uses: actions/checkout@v4
+      - name: Determine image name
+        id: vars
+        run: |
+          DEFAULT_NAME="$(echo "${GITHUB_REPOSITORY#*/}" | tr '[:upper:]/_' '[:lower:]-')"
+          IMAGE_NAME="${IMAGE_NAME_VAR:-$DEFAULT_NAME}"
+          echo "image=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+      - name: Build image (amd64, load locally)
+        uses: docker/build-push-action@v6
         with:
           context: .
           # We don't push here, just load it into the runner's docker instance
           load: true
+          platforms: linux/amd64
           # We'll tag it with the PR number for easy reference
-          tags: localbuild/openstack-k8s-tools:pr-${{ github.event.number }}
+          tags: localbuild/${{ steps.vars.outputs.image }}:pr-${{ github.event.number }}
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+      - name: Trivy
+        uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-ref: 'localbuild/openstack-k8s-tools:pr-${{ github.event.number }}'
-          format: 'table'
-          exit-code: '1' # Fail the build if vulnerabilities are found
+          image-ref: localbuild/${{ steps.vars.outputs.image }}:pr-${{ github.event.number }}
+          format: table
+          exit-code: '1'
           ignore-unfixed: true
           severity: 'CRITICAL'
 
@@ -73,66 +113,112 @@ jobs:
   # JOB 3: Run Snyk vulnerability scan
   # This job also depends on the build succeeding and runs on every PR.
   snyk-scan:
-    name: Snyk Scan
+    name: Snyk Scan (PR)
     runs-on: ubuntu-latest
     needs: build-and-test
     steps:
       - uses: actions/checkout@v4
-
-      - name: Build the Docker image for testing
-        id: build
-        uses: docker/build-push-action@v5
+      - name: Determine image name
+        id: vars
+        run: |
+          DEFAULT_NAME="$(echo "${GITHUB_REPOSITORY#*/}" | tr '[:upper:]/_' '[:lower:]-')"
+          IMAGE_NAME="${IMAGE_NAME_VAR:-$DEFAULT_NAME}"
+          echo "image=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+      - name: Build image (amd64, load locally)
+        uses: docker/build-push-action@v6
         with:
           context: .
           # We don't push here, just load it into the runner's docker instance
           load: true
+          platforms: linux/amd64
           # We'll tag it with the PR number for easy reference
-          tags: localbuild/openstack-k8s-tools:pr-${{ github.event.number }}
+          tags: localbuild/${{ steps.vars.outputs.image }}:pr-${{ github.event.number }}
 
-      - name: Run Snyk to check Docker image for vulnerabilities
+      - name: Snyk container scan
         uses: snyk/actions/docker@master
         env:
-          # Use the secret you created
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          image: 'localbuild/openstack-k8s-tools:pr-${{ github.event.number }}' # Scan the Dockerfile
+          image: localbuild/${{ steps.vars.outputs.image }}:pr-${{ github.event.number }}
           args: --severity-threshold=critical
 
   # JOB 4: Publish the image to GHCR
   # This job ONLY runs when a PR is merged into the 'main' branch.
   publish:
-    name: Publish to GHCR
+    name: Publish (multi-arch + SBOM + signing)
     runs-on: ubuntu-latest
     # This job requires all previous jobs to succeed
     needs: [build-and-test, trivy-scan, snyk-scan]
     # This condition ensures the job only runs on a push event to the main branch
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
     permissions:
       contents: read
       packages: write
+      id-token: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Log in to GHCR
+      - name: Determine image name
+        id: vars
+        run: |
+          DEFAULT_NAME="$(echo "${GITHUB_REPOSITORY#*/}" | tr '[:upper:]/_' '[:lower:]-')"
+          IMAGE_NAME="${IMAGE_NAME_VAR:-$DEFAULT_NAME}"
+          echo "image=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Docker meta (tags & labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository_owner }}/${{ steps.vars.outputs.image }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
+          labels: |
+            org.opencontainers.image.title=${{ steps.vars.outputs.image }}
+            org.opencontainers.image.description=Dev container image
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+      - name: Login GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/openstack-k8s-tools
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
-      - name: Build and push the final image
-        uses: docker/build-push-action@v5
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push (multi-arch, SBOM + provenance)
+        id: build
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          sbom: true
+          provenance: true
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign pushed image (keyless, OIDC)
+        env:
+          COSIGN_EXPERIMENTAL: "false"
+        run: |
+          set -eux
+          DIGEST="${{ steps.build.outputs.digest }}"
+          IMAGE="ghcr.io/${{ github.repository_owner }}/${{ steps.vars.outputs.image }}"
+          cosign sign --yes "${IMAGE}@${DIGEST}"

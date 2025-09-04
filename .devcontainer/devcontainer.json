@@ -1,38 +1,61 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
 {
-	"name": "Existing Dockerfile",
-	// Uncomment to use a distributed image
-	// "image": "my/openstack-k8s-tools:latest",
-	
-	"build": {
-		// Sets the run context to one level up instead of the .devcontainer folder.
-		"context": "..",
-		// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
-		"dockerfile": "../Dockerfile"
-	},
-	"remoteEnv": {
-    	"OP_SERVICE_ACCOUNT_TOKEN": "${localEnvFile:../.env:OP_SERVICE_ACCOUNT_TOKEN}"
-	},
-    
-	// Run bash by default (your entrypoint.sh still runs first)
-    "overrideCommand": false,
+  "name": "Infra Tooling",
+  "image": "ghcr.io/<myorg>/myapp:main",
 
-    // Optional: run an init command right after the container is ready
-    "postStartCommand": "echo '[devcontainer] Ready to run!'"
-	
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+  "workspaceFolder": "/workspaces/app",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/app,type=bind",
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+  // Resolve secrets on the HOST with 1Password, write .secrets/openstack/openstack.env
+  "initializeCommand": ".devcontainer/init-secrets.sh",
 
-	// Uncomment the next line to run commands after the container is created.
-	// "postCreateCommand": "cat /etc/os-release",
+  // Start container with sane PID1 and inject OS_* via env-file
+  "runArgs": [
+    "--init",
+    "--env-file", "${localWorkspaceFolder}/.devcontainer/.secrets/openstack/openstack.env"
+  ],
 
-	// Configure tool-specific properties.
-	// "customizations": {},
+  // Mount the 1Password SSH agent socket from the HOST
+  "mounts": [
+    "source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent,type=bind,consistency=cached"
+  ],
 
-	// Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "devcontainer"
+  "remoteEnv": {
+    "SSH_AUTH_SOCK": "/ssh-agent"
+  },
+
+  // Useful tools (adjust as needed)
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {},
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+
+  // Write clouds.yaml inside the container using the injected OS_* vars
+  "postStartCommand": "/bin/sh -lc .devcontainer/post-start.sh",
+
+  // If your image uses a specific user, set it (comment out if your image is root)
+  "remoteUser": "vscode",
+
+  "overrideCommand": false,
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+		"1Password.op-vscode",
+		"ms-azuretools.vscode-containers",
+		"ms-vscode-remote.remote-containers",
+		"GitHub.vscode-pull-request-github",
+		"GitHub.remotehub",
+		"hashicorp.terraform",
+		"ZainChen.json",
+		"ms-kubernetes-tools.vscode-kubernetes-tools",
+		"ms-python.vscode-pylance",
+		"ms-python.python",
+		"ms-python.vscode-python-envs",
+		"snyk-security.snyk-vulnerability-scanner",
+		"redhat.vscode-yaml",
+		"redhat.ansible",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
 }

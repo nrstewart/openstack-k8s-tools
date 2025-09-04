@@ -1,1 +1,6 @@
 .DS_Store
+# Host-resolved secrets
+.devcontainer/.secrets/
+
+# Optional host .env that carries OP_SERVICE_ACCOUNT_TOKEN
+.env
