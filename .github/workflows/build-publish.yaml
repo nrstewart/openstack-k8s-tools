@@ -60,7 +60,7 @@ jobs:
           push: never
           cacheFrom: ""
           # (Optional) be explicit about which config to use
-          # configFile: .devcontainer/devcontainer.json
+          configFile: .devcontainer/devcontainer.json
           runCmd: |
             set -eux
             kubectl version --client
