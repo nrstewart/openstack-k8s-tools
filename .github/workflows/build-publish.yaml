@@ -55,7 +55,7 @@ jobs:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         with:
           # ⬇️ Use a plain, guaranteed value. No tags here.
-          imageName: localbuild/${{ github.event.repository.name }}-devcontainer
+          imageName: localbuild/${{ github.event.repository.name }}
           # ⬇️ Your PR tag (no “latest”)
           imageTag: pr-${{ github.event.number }}
           # PRs shouldn’t push; also prevent the action from adding a default cache-from
