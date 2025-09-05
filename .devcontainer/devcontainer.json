@@ -28,19 +28,9 @@
 
   // Useful tools (adjust as needed)
   "features": {
-    "ghcr.io/devcontainers/features/common-utils:2": {
-      "installOhMyZsh": true
-    },
-    "ghcr.io/schlich/devcontainer-features/powerlevel10k:1": {},
-    "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.12"
-    },
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "lts"
-    },
-    "ghcr.io/devcontainers/features/go:1": {
-      "version": "1.22"
-    },
+    "ghcr.io/devcontainers/features/python:1": {},
+    "ghcr.io/enrico9034/devcontainer-features/openstack-cli:1": {},
+    "ghcr.io/devcontainers/features/terraform:1":	{},
     "ghcr.io/devcontainers/features/git:1": {}
   },
   
