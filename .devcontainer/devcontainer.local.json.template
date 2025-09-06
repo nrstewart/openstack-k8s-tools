@@ -1,0 +1,20 @@
+{
+  "name": "Infra Tooling (Local Overrides)",
+  "runArgs": [
+    "-v",
+    "${env:SSH_AUTH_SOCK}:/ssh-agent",
+    "-e",
+    "SSH_AUTH_SOCK=/ssh-agent"
+  ],
+  "mounts": [
+    "source=${env:HOME}/.op,target=/root/.op,type=bind,consistency=cached"
+  ],
+   "settings": {
+    "terminal.integrated.defaultProfile.linux": "zsh",
+    "editor.fontSize": 14
+  },
+  "remoteEnv": {
+    "OP_SERVICE_ACCOUNT_TOKEN": "${localEnvFile:.env:OP_SERVICE_ACCOUNT_TOKEN}"
+  }
+}
+

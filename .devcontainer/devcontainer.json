@@ -1,7 +1,9 @@
 {
   "name": "Infra Tooling",
-  "image": "mcr.microsoft.com/devcontainers/base:noble",
-
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "installOhMyZsh": true
@@ -15,6 +17,7 @@
     "ghcr.io/devcontainers/features/go:1": {},
     "ghcr.io/devcontainers-extra/features/ansible:2": {},
     "ghcr.io/hspaans/devcontainer-features/ansible-lint:2": {},
+    "ghcr.io/devcontainers-extra/features/snyk-cli:1": {},
     "ghcr.io/devcontainers/features/git:1": {}
   },
 
