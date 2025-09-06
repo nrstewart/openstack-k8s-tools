@@ -1,21 +1,9 @@
 {
   "name": "Infra Tooling",
-  "build": {
-    "context": "..",
-    "dockerfile": "../Dockerfile"
-  },
+  "image": "mcr.microsoft.com/devcontainers/base:noble",
 
   "workspaceFolder": "/workspaces/app",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/app,type=bind",
-
-  // Resolve secrets on the HOST with 1Password, write .secrets/openstack/openstack.env
-  "initializeCommand": ".devcontainer/init-secrets.sh",
-
-  // Start container with sane PID1 and inject OS_* via env-file
-  "runArgs": [
-    "--init",
-    "--env-file", "${localWorkspaceFolder}/.devcontainer/.secrets/openstack/openstack.env"
-  ],
 
   // Mount the 1Password SSH agent socket from the HOST
   "mounts": [
@@ -31,22 +19,16 @@
     "ghcr.io/devcontainers/features/common-utils:2": {
       "installOhMyZsh": true
     },
+    "ghcr.io/devcontainers/features/aws-cli:1": {},
     "ghcr.io/schlich/devcontainer-features/powerlevel10k:1": {},
-    "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.12"
-    },
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "lts"
-    },
-    "ghcr.io/devcontainers/features/go:1": {
-      "version": "1.22"
-    },
+    "ghcr.io/enrico9034/devcontainer-features/openstack-cli:1": {},
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
+    "ghcr.io/devcontainers/features/terraform:1": {},
+    "ghcr.io/devcontainers/features/python:1": {},
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/devcontainers/features/go:1": {},
     "ghcr.io/devcontainers/features/git:1": {}
   },
-  
-  "postCreateCommand": "/bin/bash -lc .devcontainer/post-create.python.sh",
-  // Write clouds.yaml inside the container using the injected OS_* vars
-  "postStartCommand": "/bin/sh -lc .devcontainer/post-start.sh",
 
   // If your image uses a specific user, set it (comment out if your image is root)
   "remoteUser": "vscode",
