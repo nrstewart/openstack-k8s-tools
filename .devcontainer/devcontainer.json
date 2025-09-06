@@ -2,15 +2,6 @@
   "name": "Infra Tooling",
   "image": "mcr.microsoft.com/devcontainers/base:noble",
 
-  // Mount the 1Password SSH agent socket from the HOST
-  "mounts": [
-    "source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent,type=bind,consistency=cached"
-  ],
-
-  "remoteEnv": {
-    "SSH_AUTH_SOCK": "/ssh-agent"
-  },
-
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "installOhMyZsh": true
