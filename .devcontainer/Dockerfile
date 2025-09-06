@@ -1,18 +1,6 @@
 # .devcontainer/Dockerfile
 FROM mcr.microsoft.com/devcontainers/base:noble
 
-# Install OpenStack Python clients
-RUN pipx install --no-cache-dir \
-      python-openstackclient \
-      python-heatclient \
-      python-magnumclient \
-      python-cinderclient \
-      python-novaclient \
-      python-neutronclient \
-      python-glanceclient \
-      python-swiftclient \
-      python-designateclient
-
 # Install 1Password CLI
 RUN curl -sS https://downloads.1password.com/linux/keys/1password.asc -o /tmp/1password.asc \
     && ARCH=$(dpkg --print-architecture) \
