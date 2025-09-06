@@ -2,9 +2,7 @@
 FROM mcr.microsoft.com/devcontainers/base:noble
 
 # Install OpenStack Python clients
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3-pip \
-    && pip3 install --no-cache-dir \
+RUN pip3 install --no-cache-dir \
       python-openstackclient \
       python-heatclient \
       python-magnumclient \
@@ -13,8 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       python-neutronclient \
       python-glanceclient \
       python-swiftclient \
-      python-designateclient \
-    && rm -rf /var/lib/apt/lists/*
+      python-designateclient
 
 # Install 1Password CLI
 RUN curl -sS https://downloads.1password.com/linux/keys/1password.asc -o /tmp/1password.asc \
