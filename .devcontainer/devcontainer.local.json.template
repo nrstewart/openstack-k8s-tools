@@ -9,7 +9,7 @@
   "mounts": [
     "source=${env:HOME}/.op,target=/root/.op,type=bind,consistency=cached"
   ],
-   "settings": {
+  "settings": {
     "terminal.integrated.defaultProfile.linux": "zsh",
     "editor.fontSize": 14
   },
