@@ -2,9 +2,6 @@
   "name": "Infra Tooling",
   "image": "mcr.microsoft.com/devcontainers/base:noble",
 
-  "workspaceFolder": "/workspaces/app",
-  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/app,type=bind",
-
   // Mount the 1Password SSH agent socket from the HOST
   "mounts": [
     "source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent,type=bind,consistency=cached"
@@ -14,7 +11,6 @@
     "SSH_AUTH_SOCK": "/ssh-agent"
   },
 
-  // Useful tools (adjust as needed)
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "installOhMyZsh": true
@@ -28,11 +24,6 @@
     "ghcr.io/devcontainers/features/go:1": {},
     "ghcr.io/devcontainers/features/git:1": {}
   },
-
-  // If your image uses a specific user, set it (comment out if your image is root)
-  "remoteUser": "vscode",
-
-  "overrideCommand": false,
 
   "customizations": {
     "vscode": {
