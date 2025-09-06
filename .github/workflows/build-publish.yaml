@@ -37,8 +37,6 @@ jobs:
       # Build the devcontainer (Features applied) and run tests INSIDE it
       - name: Build & run devcontainer
         uses: devcontainers/ci@v0.3
-        env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         with:
           imageName: localbuild/${{ github.repository_owner }}/${{ steps.vars.outputs.image }}
           imageTag: pr-${{ github.event.number }}
