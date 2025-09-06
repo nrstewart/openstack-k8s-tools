@@ -1,38 +1,44 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/docker-existing-dockerfile
 {
-	"name": "Existing Dockerfile",
-	// Uncomment to use a distributed image
-	// "image": "my/openstack-k8s-tools:latest",
-	
-	"build": {
-		// Sets the run context to one level up instead of the .devcontainer folder.
-		"context": "..",
-		// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
-		"dockerfile": "../Dockerfile"
-	},
-	"remoteEnv": {
-    	"OP_SERVICE_ACCOUNT_TOKEN": "${localEnvFile:../.env:OP_SERVICE_ACCOUNT_TOKEN}"
-	},
-    
-	// Run bash by default (your entrypoint.sh still runs first)
-    "overrideCommand": false,
+  "name": "Infra Tooling",
+  "image": "mcr.microsoft.com/devcontainers/base:noble",
 
-    // Optional: run an init command right after the container is ready
-    "postStartCommand": "echo '[devcontainer] Ready to run!'"
-	
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installOhMyZsh": true
+    },
+    "ghcr.io/devcontainers/features/aws-cli:1": {},
+    "ghcr.io/schlich/devcontainer-features/powerlevel10k:1": {},
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
+    "ghcr.io/devcontainers/features/terraform:1": {},
+    "ghcr.io/devcontainers/features/python:1": {},
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/devcontainers/features/go:1": {},
+    "ghcr.io/devcontainers-extra/features/ansible:2": {},
+    "ghcr.io/hspaans/devcontainer-features/ansible-lint:2": {},
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-
-	// Uncomment the next line to run commands after the container is created.
-	// "postCreateCommand": "cat /etc/os-release",
-
-	// Configure tool-specific properties.
-	// "customizations": {},
-
-	// Uncomment to connect as an existing user other than the container default. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "devcontainer"
+  "customizations": {
+    "vscode": {
+      "extensions": [
+		"1Password.op-vscode",
+		"ms-azuretools.vscode-containers",
+		"ms-vscode-remote.remote-containers",
+		"GitHub.vscode-pull-request-github",
+		"GitHub.remotehub",
+		"hashicorp.terraform",
+		"ZainChen.json",
+		"ms-kubernetes-tools.vscode-kubernetes-tools",
+		"ms-python.vscode-pylance",
+		"ms-python.python",
+		"ms-python.vscode-python-envs",
+		"snyk-security.snyk-vulnerability-scanner",
+		"redhat.vscode-yaml",
+		"redhat.ansible",
+    "ms-azuretools.vscode-docker",
+    "esbenp.prettier-vscode",
+    "golang.go"
+      ]
+    }
+  }
 }
