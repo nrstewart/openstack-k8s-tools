@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/devcontainers/base:noble
 
 # Install OpenStack Python clients
-RUN pip install --no-cache-dir \
+RUN pipx install --no-cache-dir \
       python-openstackclient \
       python-heatclient \
       python-magnumclient \
