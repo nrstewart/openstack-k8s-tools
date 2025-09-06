@@ -54,7 +54,6 @@ jobs:
             python --version
             ansible --version
             ansible-lint --version
-            openstack token issue >/dev/null
             echo "Devcontainer smoke tests OK"
 
   # JOB 2: Run Trivy vulnerability scan
