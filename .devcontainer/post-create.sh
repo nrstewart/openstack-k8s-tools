@@ -3,7 +3,7 @@ set -euo pipefail
 
 echo "[post-create] Installing OpenStack Python clients..."
 
-pip3 install --no-cache-dir \
+pipenv install \
   python-openstackclient \
   python-heatclient \
   python-magnumclient \

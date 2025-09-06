@@ -1,2 +1,4 @@
 .devcontainer/.env
 .devcontainer/devcontainer.local.json
+Pipfile
+Pipfile.lock
