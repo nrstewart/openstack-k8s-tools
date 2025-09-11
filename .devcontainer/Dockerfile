@@ -1,12 +1,20 @@
 # .devcontainer/Dockerfile
 FROM mcr.microsoft.com/devcontainers/base:noble
 
-# Install 1Password CLI
-RUN curl -sS https://downloads.1password.com/linux/keys/1password.asc -o /tmp/1password.asc \
-    && ARCH=$(dpkg --print-architecture) \
-    && gpg --dearmor < /tmp/1password.asc > /usr/share/keyrings/1password-archive-keyring.gpg \
-    && echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/${ARCH} stable main" \
-    | tee /etc/apt/sources.list.d/1password.list \
-    && apt-get update \
-    && apt-get install -y 1password-cli \
-    && rm -rf /var/lib/apt/lists/* /tmp/1password.asc
+# 1) Copy the Netskope CA into the Debian/Ubuntu custom CA location
+COPY nscacert_combined.pem /usr/local/share/ca-certificates/netskope.crt
+
+# 2) Register it in the system trust store so all tools (apt, curl, git, Python requests) see it
+#    Note: update-ca-certificates is available in the devcontainers base image.
+RUN update-ca-certificates
+
+# 3) (Optional but harmless) Tell APT explicitly to use the system CA bundle
+RUN printf 'Acquire::https::CaInfo "/etc/ssl/certs/ca-certificates.crt";\n' \
+    > /etc/apt/apt.conf.d/99-system-ca
+
+# 4) (Optional) Set env vars for tools that honor these; the path is the merged bundle
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
+    GIT_SSL_CAINFO=/etc/ssl/certs/ca-certificates.crt \
+    PIP_CERT=/etc/ssl/certs/ca-certificates.crt \
+    NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
