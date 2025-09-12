@@ -37,5 +37,6 @@
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers-extra/features/snyk-cli:1": {}
- }
+ },
+  "postStartCommand": ".devcontainer/post-start.sh"
 }
